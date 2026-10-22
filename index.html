@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dreams Enterprises</title>
+<meta name="theme-color" content="#0B1F4B">
+<meta name="description" content="Dreams Enterprises business app">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  html, body { margin: 0; height: 100%; background: #F7EEDA; overflow: hidden; }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #F7EEDA; }
+  #splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    background: radial-gradient(circle at 50% 35%, #FBF5E9 0, #F7EEDA 70%); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: #6B6457; transition: opacity .35s; z-index: 2; text-align: center; padding: 24px; box-sizing: border-box; }
+  #splash img { width: 260px; max-width: 70vw; height: auto; }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  .bar { width: 160px; height: 3px; border-radius: 3px; background: #E8DDC2; overflow: hidden; }
+  .bar i { display: block; width: 40%; height: 100%; background: #C9A24A; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+  @media (prefers-reduced-motion: reduce) { .bar i { animation: none; width: 100%; } }
+  #msg { font-size: 15px; max-width: 360px; line-height: 1.5; }
+  #msg button { margin-top: 12px; border: 0; border-radius: 10px; padding: 12px 24px; background: #0B1F4B; color: #F3DFA2; font-size: 16px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="splash"><img src="icons/logo.png" alt="Dreams Enterprises"><div class="bar" id="bar"><i></i></div><div id="msg"></div></div>
+<script src="config.js"></script>
+<script>
+(function () {
+  var url = (window.DREAMS_APP_URL || '').trim();
+  var splash = document.getElementById('splash'), msg = document.getElementById('msg'), bar = document.getElementById('bar');
+  function show(text, retry) {
+    bar.style.display = 'none';
+    msg.innerHTML = text + (retry ? '<br><button onclick="location.reload()">Try again</button>' : '');
+  }
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
+    show('App link is not set. Put your Dreams <b>/exec</b> link in <b>config.js</b>.', false);
+    return;
+  }
+  if (!navigator.onLine) { show('No internet connection. Check Wi-Fi or mobile data.', true); return; }
+  var f = document.createElement('iframe');
+  f.id = 'app'; f.title = 'Dreams Enterprises';
+  f.allow = 'clipboard-read; clipboard-write; fullscreen; camera; geolocation';
+  f.src = url;
+  f.addEventListener('load', function () { setTimeout(function () { splash.classList.add('hide'); }, 250); });
+  document.body.appendChild(f);
+  setTimeout(function () { if (!splash.classList.contains('hide')) show('Still loading… check the internet connection.', true); }, 25000);
+  // Messages from the Dreams app inside: "are we in the installed app?" and "reload after an update".
+  window.addEventListener('message', function (e) {
+    var d = e.data || {};
+    if (d.dreams === 'hello' && e.source) e.source.postMessage({ dreamsShell: 1 }, '*');
+    if (d.dreams === 'reload') location.reload();
+  });
+  window.addEventListener('online', function () { if (!document.getElementById('app')) location.reload(); });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+})();
+</script>
+</body>
+</html>
